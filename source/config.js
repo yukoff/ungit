@@ -104,6 +104,10 @@ const defaultConfig = {
   // "pluginConfigs": { "gerrit": { "disabled": true } }
   pluginConfigs: {},
 
+  // full path to git executable. If not set, system default will be used
+  // (in this case, git should be available on PATH)
+  gitCommand: null,
+
   // Don't show errors when the user is using a bad or undecidable git version
   gitVersionCheckOverride: false,
 
@@ -235,6 +239,25 @@ if (typeof currentRootPath !== 'string') {
 }
 module.exports.rootPath = currentRootPath;
 
+let currentGitCommand = module.exports.gitCommand;
+if (typeof currentGitCommand !== 'string') {
+  currentGitCommand = '';
+} else if (currentGitCommand !== '') {
+  // must start with a slash
+  if (currentGitCommand.charAt(0) !== '/') {
+    currentGitCommand = '/' + currentGitCommand;
+  }
+  // can not end with a trailing slash - it should be a command
+  if (currentGitCommand.charAt(currentGitCommand.length - 1) === '/') {
+    currentGitCommand = currentGitCommand.substring(0, currentGitCommand.length - 1);
+  }
+}
+// finally set default if empty
+if (currentGitCommand === '') {
+    currentGitCommand = 'git';
+}
+module.exports.gitCommand = currentGitCommand;
+
 // Errors can not be serialized with JSON.stringify without this fix
 // http://stackoverflow.com/a/18391400
 Object.defineProperty(Error.prototype, 'toJSON', {
@@ -249,16 +272,17 @@ Object.defineProperty(Error.prototype, 'toJSON', {
 });
 
 try {
-  module.exports.gitVersion = /.*?(\d+[.]\d+[.]\d+).*/.exec(child_process.execSync('git --version').toString())[1];
+  module.exports.gitVersion = /.*?(\d+[.]\d+[.]\d+).*/.exec(child_process.execSync(module.exports.gitCommand + ' --version').toString())[1];
 } catch (e) {
-  winston.error('Can\'t run "git --version". Is git installed and available in your path?', e.stderr);
+  winston.error('Can\'t run "' + module.exports.gitCommand + ' --version". Is git installed and available in your path?', e.stderr);
+  winston.warn('Alternatively you can set full path to git command via "gitCommand" setting in .ungitrc', e.stderr);
   throw e;
 }
 
 module.exports.ungitPackageVersion = require('../package.json').version;
 
 if (fs.existsSync(path.join(__dirname, '..', '.git'))){
-  const revision = child_process.execSync('git rev-parse --short HEAD', { cwd: path.join(__dirname, '..') })
+  const revision = child_process.execSync(module.exports.gitCommand + ' rev-parse --short HEAD', { cwd: path.join(__dirname, '..') })
     .toString()
     .replace('\n', ' ')
     .trim();

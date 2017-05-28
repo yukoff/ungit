@@ -52,8 +52,25 @@ Example of `~/.ungitrc` configuration file to change default port and enable bug
 
 ```json
 {
-	"port": 8080,
-	"bugtracking": true
+  "port": 8080,
+  "bugtracking": true,
+  "gitCommand": "D:\\Apps\\Git\\bin\\git"
+}
+```
+
+Normally you shouldn't configure much, but in case your `git` command is not on `$PATH`, you could set `gitCommand` parameter in `~/.ungitrc`
+
+```json
+{
+  "gitCommand": "/path/to/your/git"
+}
+```
+
+On Windows `gitCommand` should be set like the following (remember of escaping backslashes):
+
+```json
+{
+  "gitCommand": "D:\\Apps\\Git\\bin\\git"
 }
 ```
 
@@ -63,7 +80,7 @@ If you have your own merge tool that you would like to use, such as Kaleidoscope
 
 Auto Refresh
 ------------
-Ungit will watch git directory recursively upon page view and automatically refresh contents on git operations or changes on files that are not configured to be ignored in `.gitignore`.  
+Ungit will watch git directory recursively upon page view and automatically refresh contents on git operations or changes on files that are not configured to be ignored in `.gitignore`.
 
 One caveat is that node's [`fs.watch()`](https://nodejs.org/docs/latest/api/fs.html#fs_fs_watch_filename_options_listener) with `recursive: true` option is only available in Mac and Windows.  For non Mac and Windows machines, git operations will be automatically refreshed but file changes may require manual refreshes as `fs.watch()` is unable to detect changes within nested directory hierarchy.
 
